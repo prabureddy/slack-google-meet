@@ -11,7 +11,6 @@ const { formatInstallHomeView } = require("../utils");
 
 const bot = new WebClient(process.env.slackBotToken);
 
-/* GET home page. */
 router.get("/install", async (req, res, next) => {
   try {
     const { code = "" } = req.query;
@@ -72,7 +71,7 @@ router.get("/install", async (req, res, next) => {
   }
 });
 
-router.post("/init", async (req, res, next) => {
+router.post("/init-gmeet", async (req, res, next) => {
   try {
     const legit = legitSlackRequest(req);
     // if (!legit) {
