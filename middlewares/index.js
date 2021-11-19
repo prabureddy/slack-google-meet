@@ -1,4 +1,5 @@
 const { createHmac } = require("crypto");
+const qs = require("qs");
 const tsscmp = require("tsscmp");
 
 module.exports = {
@@ -19,7 +20,9 @@ module.exports = {
 
     // Update it with the Slack Request
     const [version, hash] = requestSignature.split("=");
-    const base = `${version}:${requestTimestamp}:${JSON.stringify(req.body)}`;
+    const base = `${version}:${requestTimestamp}:${qs.stringify(req.body, {
+      format: "RFC1738",
+    })}`;
     hmac.update(base);
 
     // Returns true if it matches
