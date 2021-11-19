@@ -3,13 +3,17 @@ const createError = require("http-errors");
 const { WebClient } = require("@slack/web-api");
 const FormData = require("form-data");
 const { Headers } = require("node-fetch");
-const { firestore: db } = require("firebase-admin");
+const { firestore: db, auth } = require("firebase-admin");
 const router = express.Router();
 const { fetch, installURL } = require("../common/index");
 const { legitSlackRequest } = require("../middlewares/index");
-const { formatInstallHomeView } = require("../utils");
+const {
+  formatInstallHomeView,
+  formatGMeetBlocks,
+  formatErrorBlocks,
+} = require("../utils");
 
-const bot = new WebClient(process.env.slackBotToken);
+const bot = new WebClient(process.env.slackUserToken);
 
 router.get("/install", async (req, res, next) => {
   try {
@@ -77,38 +81,84 @@ router.post("/init-gmeet", async (req, res, next) => {
     // if (!legit) {
     //   throw createError(403, "Slack signature mismatch.");
     // }
-    console.log(req.body);
     const { appId } = process.env;
-    const {
-      text,
-      api_app_id: apiAPPID,
-      channel_id: channelId,
-      user_id: userId,
-      user_name: userName,
-    } = req?.body;
+    const { text = "", api_app_id: apiAPPID } = req?.body;
     if (appId !== apiAPPID) {
-      throw createError(403, "App command mismatch.");
+      throw createError(403, "App mismatch.");
     }
-    const URL = "https://www.google.com";
-    const userIdentities = text?.split("@");
-    const eventMessage = userIdentities[0].slice(0, -1)?.trim() || "meeting";
-    const allUsers = userIdentities
-      ?.filter((i) => i[0] === "U")
-      .map((i) => i.split("|")[0]);
-    const message = `<@${userId}|${userName}> has invited ${text} to the ${eventMessage}, <${URL}|${"Click here"}> to join 🚀.`;
-    allUsers?.forEach((s) => {
-      bot.chat.postMessage({
-        text: message,
-        channel: s,
-        icon_url:
-          "https://cdn4.iconfinder.com/data/icons/logos-brands-in-colors/48/google-meet-512.png",
+    const userIdentities = text?.split("<@");
+    let splitEverything = userIdentities[0]?.trim().split(" ");
+    if (
+      splitEverything[0]?.toLowerCase() === "now" &&
+      !splitEverything[1]?.toLowerCase().includes("@")
+    ) {
+      const URL = "https://www.google.com";
+      let eventMessage = splitEverything?.slice(1)?.join(" ")?.trim();
+      let allEscapedUsers = "";
+      if (eventMessage) {
+        allEscapedUsers = text?.split(eventMessage)[1] || "";
+      } else {
+        res.json({
+          blocks: formatErrorBlocks(),
+        });
+      }
+      const allUsers = userIdentities
+        ?.filter((i) => i[0] === "U")
+        .map((i) => i.split("|")[0]);
+      const message = `I has invited${
+        allEscapedUsers ? ` ${allEscapedUsers}` : ""
+      } to the ${eventMessage}.`;
+      if (allUsers.length > 0) {
+        allUsers?.forEach(async (s) => {
+          await bot.chat.postMessage({
+            channel: s,
+            text: message,
+            blocks: formatGMeetBlocks(message, URL),
+          });
+        });
+        res.send("");
+        return;
+      }
+      res.json({
+        blocks: formatErrorBlocks(),
       });
-    });
-    res
-      .status(200)
-      .send(
-        `I've invited ${text} to the ${eventMessage}. <${URL}|${"Click here"}> to join 🚀.`
-      );
+    } else {
+      res.json({
+        blocks: formatErrorBlocks(),
+      });
+    }
+  } catch (error) {
+    console.log(error);
+    next(error);
+  }
+});
+
+router.get("/auth/google", async (req, res, next) => {
+  try {
+    const { googleClientId = "", googleRedirectURI = "" } = process.env;
+    const URL = `https://accounts.google.com/o/oauth2/v2/auth?access_type=offline&prompt=consent&response_type=code&redirect_uri=${googleRedirectURI}&scope=profile openid https://www.googleapis.com/auth/calendar.events&include_granted_scopes=true&client_id=${googleClientId}`;
+    res.redirect(URL);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get("/google/redirect", async (req, res, next) => {
+  try {
+    console.log(req.query);
+    const { googleClientId = "", googleClientSecret = "" } = process.env;
+    const { code } = req.query;
+    if (code) {
+      const googleInit = await fetch(
+        `https://oauth2.googleapis.com/token?code=${code}&client_id=${googleClientId}&client_secret=${googleClientSecret}&redirect_uri=https%3A//oauth2.example.com/code&grant_type=authorization_code`,
+        {
+          method: "POST",
+        }
+      ).then((res) => res.json());
+    } else {
+      res.status(200).json({});
+    }
+    res.json({});
   } catch (error) {
     next(error);
   }
