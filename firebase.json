@@ -1,0 +1,7 @@
+{
+  "functions": {
+    "source": ".",
+    "runtime": "nodejs14",
+    "ignore": ["**/node_modules/**"]
+  }
+}

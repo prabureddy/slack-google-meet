@@ -1,6 +1,6 @@
 const { firestore: db, auth } = require("firebase-admin");
 const { google } = require("googleapis");
-const { googleClient } = require("../common");
+const { googleClient, env } = require("../common");
 
 const howToUseItBlocks = [
   {
@@ -38,7 +38,10 @@ const howToUseItBlocks = [
 
 const getAuthBlocks = async ({ usersDb }) => {
   let authBlock = [];
-  const { googleClientId = "", googleRedirectURI = "" } = process.env;
+  const {
+    google_client_id: googleClientId = "",
+    google_redirect_uri: googleRedirectURI = "",
+  } = env;
   const { googleUser, state = "" } = usersDb;
   if (googleUser.isActive) {
     const { access_token = "", refresh_token = "" } = googleUser;

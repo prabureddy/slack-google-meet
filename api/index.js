@@ -5,8 +5,8 @@ const FormData = require("form-data");
 const { Headers } = require("node-fetch");
 const { firestore: db } = require("firebase-admin");
 const router = express.Router();
-const { fetch, installURL, googleClient } = require("../common/index");
-const { legitSlackRequest } = require("../middlewares/index");
+const { fetch, installURL, googleClient, env } = require("../common");
+const { legitSlackRequest } = require("../middlewares");
 const {
   formatInstallHomeView,
   formatGMeetBlocks,
@@ -97,7 +97,7 @@ const getMeetURL = async ({ userId, meetName }) => {
 router.get("/install", async (req, res, next) => {
   try {
     const { code = "" } = req.query;
-    const { clientId = "", clientSecret = "" } = process.env;
+    const { client_id: clientId = "", client_secret: clientSecret = "" } = env;
     if (!(code && clientId && clientSecret)) {
       return res.redirect(installURL);
     }
@@ -153,7 +153,6 @@ router.get("/install", async (req, res, next) => {
     }
     res.redirect(`https://slack.com/app_redirect?app=${app_id}&tab=home`);
   } catch (error) {
-    console.log(error);
     next(error);
   }
 });
@@ -164,7 +163,7 @@ router.post("/init-gmeet", async (req, res, next) => {
     if (!legit) {
       throw createError(403, "Slack signature mismatch.");
     }
-    const { appId } = process.env;
+    const { app_id } = env;
     const { text = "", api_app_id: apiAPPID, user_id: userId } = req?.body;
     const {
       userAccessToken,
@@ -175,7 +174,7 @@ router.post("/init-gmeet", async (req, res, next) => {
       return;
     }
     const bot = new WebClient(userAccessToken);
-    if (appId !== apiAPPID) {
+    if (app_id !== apiAPPID) {
       throw createError(403, "App mismatch.");
     }
     const userIdentities = text?.split("<@");
@@ -225,7 +224,6 @@ router.post("/init-gmeet", async (req, res, next) => {
       });
     }
   } catch (error) {
-    console.log(error);
     next(error);
   }
 });
@@ -273,11 +271,11 @@ router.post("/interactivity", async (req, res) => {
 router.get("/google/redirect", async (req, res, next) => {
   try {
     const {
-      googleClientId = "",
-      googleClientSecret = "",
-      googleRedirectURI = "",
-      appId = "",
-    } = process.env;
+      google_client_id: googleClientId = "",
+      google_client_secret: googleClientSecret = "",
+      google_redirect_uri: googleRedirectURI = "",
+      app_id: appId = "",
+    } = env;
     const { code = "", state = "", authuser = "" } = req.query;
     const usersDbByState = await db()
       .collection("users")

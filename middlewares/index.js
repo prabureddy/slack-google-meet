@@ -1,11 +1,12 @@
 const { createHmac } = require("crypto");
 const qs = require("qs");
 const tsscmp = require("tsscmp");
+const { env } = require("../common");
 
 module.exports = {
   legitSlackRequest: (req) => {
     // Your signing secret
-    const slackSigningSecret = process.env.signingSecret;
+    const slackSigningSecret = env.signing_secret;
 
     // Grab the signature and timestamp from the headers
     const requestSignature = req.headers["x-slack-signature"];
