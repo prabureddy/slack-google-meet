@@ -5,7 +5,7 @@ const FormData = require("form-data");
 const { Headers } = require("node-fetch");
 const { firestore: db } = require("firebase-admin");
 const router = express.Router();
-const { fetch, installURL } = require("../common/index");
+const { fetch, installURL, googleClient } = require("../common/index");
 const { legitSlackRequest } = require("../middlewares/index");
 const {
   formatInstallHomeView,
@@ -13,8 +13,87 @@ const {
   formatErrorBlocks,
 } = require("../utils/formatBlocks");
 const { uid } = require("../utils/index");
+const { google } = require("googleapis");
 
 const bot = new WebClient(process.env.slackUserToken);
+
+const getMeetURL = async ({ userId, meetName }) => {
+  const usersDb = await (
+    await db().collection("users").doc(userId).get()
+  ).data();
+  const { googleUser } = usersDb;
+  const { access_token = "", refresh_token = "" } = googleUser;
+  if (!googleUser.isActive) {
+    return "Please connect and authorize your google account!";
+  }
+  return new Promise(async (resolve, reject) => {
+    const client = googleClient;
+    client.setCredentials({
+      refresh_token,
+      access_token,
+    });
+    const googleCalendar = google.calendar({
+      version: "v3",
+    });
+    const event = {
+      summary: meetName,
+      conferenceData: {
+        createRequest: {
+          conferenceSolutionKey: {
+            type: "hangoutsMeet",
+          },
+        },
+        entryPoints: [
+          {
+            entryPointType: "video",
+          },
+        ],
+      },
+      start: {
+        dateTime: new Date().toISOString(),
+      },
+      end: {
+        dateTime: new Date().toISOString(),
+      },
+    };
+    const googleCreateCalendar = await new Promise(
+      (reqCalendar, resCalendar) => {
+        googleCalendar.events.insert(
+          {
+            auth: client,
+            calendarId: "primary",
+            resource: event,
+          },
+          async (err, res) => {
+            if (err) {
+              resCalendar(err);
+            } else {
+              const { data } = res;
+              reqCalendar(data);
+            }
+          }
+        );
+      }
+    );
+    const meetData = (
+      await googleCalendar.events.patch({
+        auth: client,
+        calendarId: "primary",
+        eventId: googleCreateCalendar?.id,
+        conferenceDataVersion: 1,
+        resource: {
+          conferenceData: {
+            createRequest: { requestId: uid() },
+          },
+        },
+      })
+    )?.data;
+    if (!meetData) {
+      reject(meetData);
+    }
+    resolve(meetData?.hangoutLink);
+  });
+};
 
 router.get("/install", async (req, res, next) => {
   try {
@@ -57,6 +136,7 @@ router.get("/install", async (req, res, next) => {
         botUserId,
         team,
         state,
+        googleUser: { isActive: false },
       },
       { merge: true }
     );
@@ -88,7 +168,7 @@ router.post("/init-gmeet", async (req, res, next) => {
       throw createError(403, "Slack signature mismatch.");
     }
     const { appId } = process.env;
-    const { text = "", api_app_id: apiAPPID } = req?.body;
+    const { text = "", api_app_id: apiAPPID, user_id: userId } = req?.body;
     if (appId !== apiAPPID) {
       throw createError(403, "App mismatch.");
     }
@@ -98,9 +178,14 @@ router.post("/init-gmeet", async (req, res, next) => {
       splitEverything[0]?.toLowerCase() === "now" &&
       !splitEverything[1]?.toLowerCase().includes("@")
     ) {
-      const URL = "https://www.google.com";
       let eventMessage = splitEverything?.slice(1)?.join(" ")?.trim();
       let allEscapedUsers = "";
+      res.send("");
+      const URL = await getMeetURL({ userId, meetName: eventMessage });
+      if (!URL?.includes("https://")) {
+        res.send(URL || "Something went wrong while creating meeting!");
+        return;
+      }
       if (eventMessage) {
         allEscapedUsers = text?.split(eventMessage)[1] || "";
       } else {
@@ -111,7 +196,7 @@ router.post("/init-gmeet", async (req, res, next) => {
       const allUsers = userIdentities
         ?.filter((i) => i[0] === "U")
         .map((i) => i.split("|")[0]);
-      const message = `I has invited${
+      const message = `I have invited${
         allEscapedUsers ? ` ${allEscapedUsers}` : ""
       } to the ${eventMessage}.`;
       if (allUsers.length > 0) {
@@ -134,7 +219,6 @@ router.post("/init-gmeet", async (req, res, next) => {
       });
     }
   } catch (error) {
-    console.log(error);
     next(error);
   }
 });
@@ -244,7 +328,6 @@ router.get("/google/redirect", async (req, res, next) => {
       res.status(400).send("Bad Request");
     }
   } catch (error) {
-    console.log(error);
     next(error);
   }
 });

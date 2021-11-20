@@ -1,5 +1,6 @@
 const { firestore: db, auth } = require("firebase-admin");
 const { google } = require("googleapis");
+const { googleClient } = require("../common");
 
 const howToUseItBlocks = [
   {
@@ -37,12 +38,10 @@ const howToUseItBlocks = [
 
 module.exports = {
   formatInstallHomeView: async ({ userId = "" }) => {
-    const { backendURL } = process.env;
     const {
       googleClientId = "",
       googleClientSecret = "",
       googleRedirectURI = "",
-      googleAPIKey = "",
     } = process.env;
     const usersDb = await (
       await db().collection("users").doc(userId).get()
@@ -51,11 +50,7 @@ module.exports = {
     let authBlock = [];
     if (googleUser.isActive) {
       const { access_token = "", refresh_token = "" } = googleUser;
-      const client = new google.auth.OAuth2(
-        googleClientId,
-        googleClientSecret,
-        googleRedirectURI
-      );
+      const client = googleClient;
       client.setCredentials({
         refresh_token,
         access_token,
@@ -103,7 +98,6 @@ module.exports = {
           url: encodeURI(googleOauthURL),
         });
       } else if (calendarItems.length >= 0) {
-        // const googleOauthURL = `https://accounts.google.com/o/oauth2/v2/auth?state=${state}&access_type=offline&prompt=consent&response_type=code&redirect_uri=${googleRedirectURI}&scope=profile openid https://www.googleapis.com/auth/calendar.events&include_granted_scopes=true&client_id=${googleClientId}`;
         authBlock.push({
           type: "button",
           text: {
@@ -112,7 +106,6 @@ module.exports = {
           },
           style: "danger",
           action_id: "revoke-calendar",
-          // url: encodeURI(googleOauthURL),
         });
       }
     } else {
