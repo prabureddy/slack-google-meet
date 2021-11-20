@@ -36,90 +36,90 @@ const howToUseItBlocks = [
   },
 ];
 
-module.exports = {
-  formatInstallHomeView: async ({ userId = "" }) => {
-    const {
-      googleClientId = "",
-      googleClientSecret = "",
-      googleRedirectURI = "",
-    } = process.env;
-    const usersDb = await (
-      await db().collection("users").doc(userId).get()
-    ).data();
-    const { state, googleUser } = usersDb;
-    let authBlock = [];
-    if (googleUser.isActive) {
-      const { access_token = "", refresh_token = "" } = googleUser;
-      const client = googleClient;
-      client.setCredentials({
-        refresh_token,
-        access_token,
-      });
-      const googleCalendar = google.calendar({
-        version: "v3",
-      });
-      const calendarItems = await new Promise((resolve, reject) => {
-        googleCalendar.events.list(
-          {
-            auth: client,
-            calendarId: "primary",
-            timeMin: new Date().toISOString(),
-            maxResults: 10,
-            singleEvents: true,
-            orderBy: "startTime",
-          },
-          async (err, res) => {
-            if (err) {
-              await db()
-                .collection("users")
-                .doc(userId)
-                .set(
-                  {
-                    googleUser: { isActive: false },
-                  },
-                  { merge: true }
-                );
-              reject();
-            } else if (res.data.items) {
-              resolve(res.data.items);
-            }
+const getAuthBlocks = async ({ usersDb }) => {
+  let authBlock = [];
+  const { googleClientId = "", googleRedirectURI = "" } = process.env;
+  const { googleUser, state = "" } = usersDb;
+  if (googleUser.isActive) {
+    const { access_token = "", refresh_token = "" } = googleUser;
+    const client = googleClient;
+    client.setCredentials({
+      refresh_token,
+      access_token,
+    });
+    const googleCalendar = google.calendar({
+      version: "v3",
+    });
+    const calendarItems = await new Promise((resolve, reject) => {
+      googleCalendar.events.list(
+        {
+          auth: client,
+          calendarId: "primary",
+          timeMin: new Date().toISOString(),
+          maxResults: 10,
+          singleEvents: true,
+          orderBy: "startTime",
+        },
+        async (err, res) => {
+          if (err) {
+            await db()
+              .collection("users")
+              .doc(userId)
+              .set(
+                {
+                  googleUser: { isActive: false },
+                },
+                { merge: true }
+              );
+            reject();
+          } else if (res.data.items) {
+            resolve(res.data.items);
           }
-        );
-      });
-      if (!calendarItems) {
-        const googleOauthURL = `https://accounts.google.com/o/oauth2/v2/auth?state=${state}&access_type=offline&prompt=consent&response_type=code&redirect_uri=${googleRedirectURI}&scope=profile openid https://www.googleapis.com/auth/calendar.events&include_granted_scopes=true&client_id=${googleClientId}`;
-        authBlock.push({
-          type: "button",
-          text: {
-            type: "plain_text",
-            text: "Authorize Calendar",
-          },
-          style: "primary",
-          url: encodeURI(googleOauthURL),
-        });
-      } else if (calendarItems.length >= 0) {
-        authBlock.push({
-          type: "button",
-          text: {
-            type: "plain_text",
-            text: "Revoke Calendar",
-          },
-          style: "danger",
-          action_id: "revoke-calendar",
-        });
-      }
-    } else {
+        }
+      );
+    });
+    if (!calendarItems) {
       const googleOauthURL = `https://accounts.google.com/o/oauth2/v2/auth?state=${state}&access_type=offline&prompt=consent&response_type=code&redirect_uri=${googleRedirectURI}&scope=profile openid https://www.googleapis.com/auth/calendar.events&include_granted_scopes=true&client_id=${googleClientId}`;
       authBlock.push({
         type: "button",
         text: {
           type: "plain_text",
-          text: "Connect Account",
+          text: "Authorize Calendar",
         },
         style: "primary",
         url: encodeURI(googleOauthURL),
       });
+    } else if (calendarItems.length >= 0) {
+      authBlock.push({
+        type: "button",
+        text: {
+          type: "plain_text",
+          text: "Revoke Calendar",
+        },
+        style: "danger",
+        action_id: "revoke-calendar",
+      });
     }
+  } else {
+    const googleOauthURL = `https://accounts.google.com/o/oauth2/v2/auth?state=${state}&access_type=offline&prompt=consent&response_type=code&redirect_uri=${googleRedirectURI}&scope=profile openid https://www.googleapis.com/auth/calendar.events&include_granted_scopes=true&client_id=${googleClientId}`;
+    authBlock.push({
+      type: "button",
+      text: {
+        type: "plain_text",
+        text: "Connect Account",
+      },
+      style: "primary",
+      url: encodeURI(googleOauthURL),
+    });
+  }
+  return [...authBlock];
+};
+
+module.exports = {
+  formatInstallHomeView: async ({ userId = "" }) => {
+    const usersDb = await (
+      await db().collection("users").doc(userId).get()
+    ).data();
     return {
       user_id: userId,
       view: {
@@ -134,7 +134,7 @@ module.exports = {
           },
           {
             type: "actions",
-            elements: [...authBlock],
+            elements: await getAuthBlocks({ usersDb }),
           },
           {
             type: "divider",
@@ -142,6 +142,26 @@ module.exports = {
           ...howToUseItBlocks,
         ],
       },
+    };
+  },
+  connectAccount: async ({ userId = "" }) => {
+    const usersDb = await (
+      await db().collection("users").doc(userId).get()
+    ).data();
+    return {
+      blocks: [
+        {
+          type: "header",
+          text: {
+            type: "plain_text",
+            text: "Connect your google account to start using google meet",
+          },
+        },
+        {
+          type: "actions",
+          elements: await getAuthBlocks({ usersDb }),
+        },
+      ],
     };
   },
   formatGMeetBlocks: (message = "", URL = "") => {

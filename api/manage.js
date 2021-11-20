@@ -11,11 +11,10 @@ const {
   formatInstallHomeView,
   formatGMeetBlocks,
   formatErrorBlocks,
+  connectAccount,
 } = require("../utils/formatBlocks");
 const { uid } = require("../utils/index");
 const { google } = require("googleapis");
-
-const bot = new WebClient(process.env.slackUserToken);
 
 const getMeetURL = async ({ userId, meetName }) => {
   const usersDb = await (
@@ -24,7 +23,7 @@ const getMeetURL = async ({ userId, meetName }) => {
   const { googleUser } = usersDb;
   const { access_token = "", refresh_token = "" } = googleUser;
   if (!googleUser.isActive) {
-    return "Please connect and authorize your google account!";
+    return "Please connect and authorize your google account to create a meeting!";
   }
   return new Promise(async (resolve, reject) => {
     const client = googleClient;
@@ -98,12 +97,8 @@ const getMeetURL = async ({ userId, meetName }) => {
 router.get("/install", async (req, res, next) => {
   try {
     const { code = "" } = req.query;
-    const {
-      clientId = "",
-      clientSecret = "",
-      slackBotToken = "",
-    } = process.env;
-    if (!(code && clientId && clientSecret && slackBotToken)) {
+    const { clientId = "", clientSecret = "" } = process.env;
+    if (!(code && clientId && clientSecret)) {
       return res.redirect(installURL);
     }
     const bodyFormData = new FormData();
@@ -119,19 +114,20 @@ router.get("/install", async (req, res, next) => {
     }
     const {
       app_id = "",
-      access_token = "",
-      authed_user: { id: userId = "" },
+      access_token: botAccessToken = "",
+      authed_user: { id: userId = "", access_token: userAccessToken = "" },
       team,
       bot_user_id: botUserId,
     } = userInitData;
-    if (!app_id || !userId || !access_token) {
+    if (!app_id || !userId || !botAccessToken) {
       return res.redirect(installURL);
     }
     const usersDb = db().collection("users");
     const state = uid();
     await usersDb.doc(userId).set(
       {
-        botAccessToken: access_token,
+        botAccessToken,
+        userAccessToken,
         userId,
         botUserId,
         team,
@@ -145,7 +141,7 @@ router.get("/install", async (req, res, next) => {
       body: JSON.stringify((await formatInstallHomeView({ userId })) || {}),
       headers: new Headers({
         "Content-Type": "application/json",
-        Authorization: `Bearer ${slackBotToken}`,
+        Authorization: `Bearer ${botAccessToken}`,
       }),
     };
     const homeViewData = await fetch(
@@ -157,6 +153,7 @@ router.get("/install", async (req, res, next) => {
     }
     res.redirect(`https://slack.com/app_redirect?app=${app_id}&tab=home`);
   } catch (error) {
+    console.log(error);
     next(error);
   }
 });
@@ -169,6 +166,15 @@ router.post("/init-gmeet", async (req, res, next) => {
     }
     const { appId } = process.env;
     const { text = "", api_app_id: apiAPPID, user_id: userId } = req?.body;
+    const {
+      userAccessToken,
+      googleUser: { isActive },
+    } = await (await db().collection("users").doc(userId).get()).data();
+    if (!isActive) {
+      res.json(await connectAccount({ userId }));
+      return;
+    }
+    const bot = new WebClient(userAccessToken);
     if (appId !== apiAPPID) {
       throw createError(403, "App mismatch.");
     }
@@ -219,6 +225,7 @@ router.post("/init-gmeet", async (req, res, next) => {
       });
     }
   } catch (error) {
+    console.log(error);
     next(error);
   }
 });
@@ -228,8 +235,6 @@ router.post("/interactivity", async (req, res) => {
   if (!legit) {
     throw createError(403, "Slack signature mismatch.");
   }
-  const { slackBotToken = "" } = process.env;
-
   const {
     actions = [],
     user: { id: userId = "" },
@@ -237,6 +242,9 @@ router.post("/interactivity", async (req, res) => {
   if (!userId) {
     throw createError(403, "Invalid user.");
   }
+  const { botAccessToken } = await (
+    await db().collection("users").doc(userId).get()
+  ).data();
   actions.forEach(async (action) => {
     if (action.action_id === "revoke-calendar") {
       await db()
@@ -253,7 +261,7 @@ router.post("/interactivity", async (req, res) => {
         body: JSON.stringify((await formatInstallHomeView({ userId })) || {}),
         headers: new Headers({
           "Content-Type": "application/json",
-          Authorization: `Bearer ${slackBotToken}`,
+          Authorization: `Bearer ${botAccessToken}`,
         }),
       };
       await fetch("https://slack.com/api/views.publish", homeViewDataOptions);
@@ -268,7 +276,6 @@ router.get("/google/redirect", async (req, res, next) => {
       googleClientId = "",
       googleClientSecret = "",
       googleRedirectURI = "",
-      slackBotToken = "",
       appId = "",
     } = process.env;
     const { code = "", state = "", authuser = "" } = req.query;
@@ -285,7 +292,7 @@ router.get("/google/redirect", async (req, res, next) => {
       return;
     }
     const user = allUsers[0];
-    const { state: userState, userId = "" } = user.data();
+    const { state: userState, userId = "", botAccessToken = "" } = user.data();
     if (code && state == userState && userId) {
       const googleInit = await fetch(
         `https://oauth2.googleapis.com/token?code=${code}&client_id=${googleClientId}&client_secret=${googleClientSecret}&redirect_uri=${googleRedirectURI}&grant_type=authorization_code`,
@@ -311,7 +318,7 @@ router.get("/google/redirect", async (req, res, next) => {
         body: JSON.stringify((await formatInstallHomeView({ userId })) || {}),
         headers: new Headers({
           "Content-Type": "application/json",
-          Authorization: `Bearer ${slackBotToken}`,
+          Authorization: `Bearer ${botAccessToken}`,
         }),
       };
       const homeViewData = await fetch(
