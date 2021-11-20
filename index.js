@@ -12,7 +12,7 @@ fs.initializeApp({
   credential: fs.credential.cert(serviceAccount),
 });
 
-const indexRouter = require("./routes/index");
+const indexRouter = require("./api/manage");
 
 const app = express();
 const PORT = process.env.port || 3005;
@@ -21,7 +21,7 @@ app.use(logger("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use("/", indexRouter);
+app.use("/api/manage", indexRouter);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
