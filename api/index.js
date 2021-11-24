@@ -90,7 +90,10 @@ const getMeetURL = async ({ userId, meetName }) => {
     if (!meetData) {
       reject(meetData);
     }
-    resolve(meetData?.hangoutLink);
+    resolve({
+      link: `${meetData?.hangoutLink}`,
+      userEmail: `${meetData?.creator?.email}`,
+    });
   });
 };
 
@@ -170,7 +173,9 @@ router.post("/init-gmeet", async (req, res, next) => {
       googleUser: { isActive },
     } = (await db().collection("users").doc(userId).get()).data();
     if (!isActive) {
-      res.json(connectAccount({ userId }));
+      connectAccount({ userId }).then((r) => {
+        res.json(r);
+      });
       return;
     }
     const bot = new WebClient(userAccessToken);
@@ -186,7 +191,10 @@ router.post("/init-gmeet", async (req, res, next) => {
       res.send("");
       let eventMessage = splitEverything?.slice(1)?.join(" ")?.trim();
       let allEscapedUsers = "";
-      const URL = await getMeetURL({ userId, meetName: eventMessage });
+      const { link: URL, userEmail: creatorEmail } = await getMeetURL({
+        userId,
+        meetName: eventMessage,
+      });
       if (!URL?.includes("https://")) {
         res.send(URL || "Something went wrong while creating meeting!");
         return;
@@ -209,7 +217,10 @@ router.post("/init-gmeet", async (req, res, next) => {
           await bot.chat.postMessage({
             channel: s,
             text: message,
-            blocks: formatGMeetBlocks(message, URL),
+            blocks: formatGMeetBlocks(
+              message,
+              `${URL}?authuser=${creatorEmail}`
+            ),
           });
         });
         res.send("");

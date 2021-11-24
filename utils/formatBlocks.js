@@ -115,14 +115,13 @@ const getAuthBlocks = async ({ usersDb }) => {
       url: encodeURI(googleOauthURL),
     });
   }
-  return [...authBlock];
+  return new Promise((r) => r([...authBlock]));
 };
 
 module.exports = {
   formatInstallHomeView: async ({ userId = "" }) => {
-    const usersDb = await (
-      await db().collection("users").doc(userId).get()
-    ).data();
+    const usersDb = (await db().collection("users").doc(userId).get()).data();
+    const authBlocks = await getAuthBlocks({ usersDb });
     return {
       user_id: userId,
       view: {
@@ -137,7 +136,7 @@ module.exports = {
           },
           {
             type: "actions",
-            elements: await getAuthBlocks({ usersDb }),
+            elements: authBlocks,
           },
           {
             type: "divider",
@@ -148,24 +147,25 @@ module.exports = {
     };
   },
   connectAccount: async ({ userId = "" }) => {
-    const usersDb = await (
-      await db().collection("users").doc(userId).get()
-    ).data();
-    return {
-      blocks: [
-        {
-          type: "header",
-          text: {
-            type: "plain_text",
-            text: "Connect your google account to start using google meet",
+    const usersDb = (await db().collection("users").doc(userId).get()).data();
+    const authBlocks = await getAuthBlocks({ usersDb });
+    return new Promise((response) => {
+      response({
+        blocks: [
+          {
+            type: "header",
+            text: {
+              type: "plain_text",
+              text: "Connect your google account to start using google meet",
+            },
           },
-        },
-        {
-          type: "actions",
-          elements: await getAuthBlocks({ usersDb }),
-        },
-      ],
-    };
+          {
+            type: "actions",
+            elements: authBlocks,
+          },
+        ],
+      });
+    });
   },
   formatGMeetBlocks: (message = "", URL = "") => {
     return [
