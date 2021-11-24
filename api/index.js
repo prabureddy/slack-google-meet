@@ -168,9 +168,9 @@ router.post("/init-gmeet", async (req, res, next) => {
     const {
       userAccessToken,
       googleUser: { isActive },
-    } = await (await db().collection("users").doc(userId).get()).data();
+    } = (await db().collection("users").doc(userId).get()).data();
     if (!isActive) {
-      res.json(await connectAccount({ userId }));
+      res.json(connectAccount({ userId }));
       return;
     }
     const bot = new WebClient(userAccessToken);
@@ -183,9 +183,9 @@ router.post("/init-gmeet", async (req, res, next) => {
       splitEverything[0]?.toLowerCase() === "now" &&
       !splitEverything[1]?.toLowerCase().includes("@")
     ) {
+      res.send("");
       let eventMessage = splitEverything?.slice(1)?.join(" ")?.trim();
       let allEscapedUsers = "";
-      res.send("");
       const URL = await getMeetURL({ userId, meetName: eventMessage });
       if (!URL?.includes("https://")) {
         res.send(URL || "Something went wrong while creating meeting!");

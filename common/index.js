@@ -5,10 +5,11 @@ const fs = require("fs");
 const getFile = (file) =>
   JSON.parse(fs.readFileSync(path.resolve(file), "utf8"));
 
-let env = getFile(".env.production.json");
+const ENV_DEVELOPMENT_FILE_NAME = ".env.development.json";
+const ENV_PRODUCTIONT_FILE_NAME = ".env.production.json";
 
-// TODO: While deploying uncomment this below line
-// env = getFile(".env.production.json");
+// Toggle this line when deploying to PRODUCTION
+let env = getFile(ENV_PRODUCTIONT_FILE_NAME);
 
 const {
   google_client_id: googleClientId = "",

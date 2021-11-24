@@ -32,4 +32,4 @@ app.use(function (err, req, res) {
   res.status(statusCode).json({ ...err, statusCode });
 });
 
-exports.api = functions.https.onRequest(app);
+exports.api = functions.region("asia-south1").https.onRequest(app);

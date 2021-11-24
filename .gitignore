@@ -67,3 +67,5 @@ node_modules/
 .env.production.json
 .env
 env
+
+private/
