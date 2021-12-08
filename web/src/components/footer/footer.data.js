@@ -5,33 +5,33 @@ import dribbble from "assets/images/icons/dribbble.png";
 import linkedin from "assets/images/icons/linkedin.png";
 
 export const menuItems = [
-  {
-    id: 2,
-    title: "About Us",
-    items: [
-      {
-        path: "mailto:bhargava.prabu@gmail.com",
-        label: "Support Center",
-        external: true,
-      },
-      // {
-      //   path: "#!",
-      //   label: "Customer Support",
-      // },
-      {
-        path: "#!",
-        label: "About Us",
-      },
-      // {
-      //   path: "#!",
-      //   label: "Copyright",
-      // },
-      // {
-      //   path: "#!",
-      //   label: "Popular Campaign",
-      // },
-    ],
-  },
+  // {
+  //   id: 2,
+  //   title: "About Us",
+  //   items: [
+  //     {
+  //       path: "mailto:bhargava.prabu@gmail.com",
+  //       label: "Support Center",
+  //       external: true,
+  //     },
+  //     // {
+  //     //   path: "#!",
+  //     //   label: "Customer Support",
+  //     // },
+  //     {
+  //       path: "#!",
+  //       label: "About Us",
+  //     },
+  //     // {
+  //     //   path: "#!",
+  //     //   label: "Copyright",
+  //     // },
+  //     // {
+  //     //   path: "#!",
+  //     //   label: "Popular Campaign",
+  //     // },
+  //   ],
+  // },
   // {
   //   id: 3,
   //   title: "Our Information",

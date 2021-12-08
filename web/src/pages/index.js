@@ -16,13 +16,13 @@ export default function IndexPage() {
         description="Open Google meet from slack using one command"
       />
       <Banner />
-      {/* <Services />
-        <Testimonials />
-        <OurTeam />
-        <OtherServices />
-        <WhyUs />
-        <Blog />
-        <SubscribeUs /> */}
+      <Services />
+      {/* <Testimonials />
+      <OurTeam />
+      <OtherServices />
+      <WhyUs />
+      <Blog />
+      <SubscribeUs /> */}
     </div>
   );
 }

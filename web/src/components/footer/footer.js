@@ -17,9 +17,9 @@ export default function Footer() {
               <Logo />
             </Box>
             <Box sx={styles.terms}>
-              <Link path="#!">Terms of use</Link>
-              <Text as="span">|</Text>
-              <Link path="/privacy">Privacy</Link>
+              {/* <Link path="#!">Terms of use</Link>
+              <Text as="span">|</Text> */}
+              <Link path="/privacy">Privacy Policy</Link>
             </Box>
             {/* <Text as="p" sx={styles.copyright}>
               Copyright by {new Date().getFullYear()} RedQ, Inc
