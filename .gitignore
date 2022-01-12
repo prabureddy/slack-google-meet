@@ -17,6 +17,7 @@ firebase-debug.*.log*
 # it commented so all members can deploy to the same project(s) in .firebaserc.
 # .firebaserc
 .next
+out
 
 # Runtime data
 pids

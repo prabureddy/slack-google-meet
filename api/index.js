@@ -4,7 +4,7 @@ const { WebClient } = require("@slack/web-api");
 const FormData = require("form-data");
 const { Headers } = require("node-fetch");
 const { firestore: db } = require("firebase-admin");
-const router = express.Router();
+const app = express();
 const { fetch, installURL, googleClient, env } = require("../common");
 const { legitSlackRequest } = require("../middlewares");
 const {
@@ -97,7 +97,7 @@ const getMeetURL = async ({ userId, meetName }) => {
   });
 };
 
-router.get("/install", async (req, res, next) => {
+app.get("/install", async (req, res, next) => {
   try {
     const { code = "" } = req.query;
     const { client_id: clientId = "", client_secret: clientSecret = "" } = env;
@@ -160,7 +160,7 @@ router.get("/install", async (req, res, next) => {
   }
 });
 
-router.post("/init-gmeet", async (req, res, next) => {
+app.post("/init-gmeet", async (req, res, next) => {
   try {
     const legit = legitSlackRequest(req);
     if (!legit) {
@@ -239,7 +239,7 @@ router.post("/init-gmeet", async (req, res, next) => {
   }
 });
 
-router.post("/interactivity", async (req, res) => {
+app.post("/interactivity", async (req, res) => {
   const legit = legitSlackRequest(req);
   if (!legit) {
     throw createError(403, "Slack signature mismatch.");
@@ -279,7 +279,7 @@ router.post("/interactivity", async (req, res) => {
   res.status(200).send();
 });
 
-router.get("/google/redirect", async (req, res, next) => {
+app.get("/google/redirect", async (req, res, next) => {
   try {
     const {
       google_client_id: googleClientId = "",
@@ -348,4 +348,4 @@ router.get("/google/redirect", async (req, res, next) => {
   }
 });
 
-module.exports = router;
+module.exports = app;
