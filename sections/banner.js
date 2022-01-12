@@ -2,9 +2,9 @@
 /** @jsx jsx */
 import { jsx, Box, Container, Button, Image } from "theme-ui";
 import { rgba } from "polished";
-import SectionHeading from "components/section-heading";
-import illustration from "assets/images/banner-illustration.png";
-import AddToSlack from "components/addToSlack";
+import SectionHeading from "../components/section-heading";
+import illustration from "../assets/images/banner-illustration.png";
+import AddToSlack from "../components/addToSlack";
 
 const Banner = () => {
   return (

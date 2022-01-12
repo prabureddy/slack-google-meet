@@ -1,9 +1,9 @@
 import { useEffect } from "react";
 import Router from "next/router";
-import Layout from "components/layout";
+import Layout from "../components/layout";
 import { ThemeProvider, Container } from "theme-ui";
-import theme from "theme";
-import { initGA, logPageView } from "analytics";
+import theme from "../theme";
+import { initGA, logPageView } from "../analytics";
 import "rc-tabs/assets/index.css";
 import "swiper/swiper-bundle.min.css";
 import "rc-drawer/assets/index.css";

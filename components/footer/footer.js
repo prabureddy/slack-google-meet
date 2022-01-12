@@ -1,8 +1,8 @@
 /** @jsxRuntime classic */
 /** @jsx jsx */
 import { jsx, Box, Text, Container } from "theme-ui";
-import Logo from "components/logo";
-import { Link } from "components/link";
+import Logo from "../logo";
+import { Link } from "../link";
 import Widget from "./widget";
 import { menuItems } from "./footer.data";
 import { rgba } from "polished";

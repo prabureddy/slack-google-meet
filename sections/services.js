@@ -2,11 +2,11 @@
 /** @jsx jsx */
 import { jsx, Box, Container } from "theme-ui";
 import { rgba } from "polished";
-import SectionHeading from "components/section-heading";
-import Service from "components/cards/service";
-import icon1 from "assets/images/icons/service1.png";
-import icon2 from "assets/images/icons/service2.png";
-import icon3 from "assets/images/icons/service3.png";
+import SectionHeading from "../components/section-heading";
+import Service from "../components/cards/service";
+import icon1 from "../assets/images/icons/service1.png";
+import icon2 from "../assets/images/icons/service2.png";
+import icon3 from "../assets/images/icons/service3.png";
 
 const data = [
   {
