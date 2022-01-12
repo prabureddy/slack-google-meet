@@ -4,6 +4,7 @@ const { WebClient } = require("@slack/web-api");
 const FormData = require("form-data");
 const { Headers } = require("node-fetch");
 const { firestore: db } = require("firebase-admin");
+const router = express.Router();
 const { fetch, installURL, googleClient, env } = require("../common");
 const { legitSlackRequest } = require("../middlewares");
 const {

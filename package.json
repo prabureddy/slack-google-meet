@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "dev": "node index.js",
+    "dev": "nodemon index.js",
     "build": "next build",
     "start": "cross-env NODE_ENV=production node index.js"
   },
@@ -16,7 +16,6 @@
     "express": "^4.17.1",
     "firebase": "^9.3.0",
     "firebase-admin": "^10.0.0",
-    "firebase-functions": "^3.16.0",
     "form-data": "^4.0.0",
     "googleapis": "^39.2.0",
     "http-errors": "~1.6.3",

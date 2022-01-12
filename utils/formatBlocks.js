@@ -1,4 +1,4 @@
-const { firestore: db, auth } = require("firebase-admin");
+const { firestore: db } = require("firebase-admin");
 const { google } = require("googleapis");
 const { googleClient, env } = require("../common");
 

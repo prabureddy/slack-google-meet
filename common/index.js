@@ -8,9 +8,12 @@ const {
   slack_redirect_uri: slackRedirectURI = "",
 } = process.env;
 
+const installURL = `https://slack.com/oauth/v2/authorize?scope=commands&user_scope=chat%3Awrite&redirect_uri=${slackRedirectURI}&client_id=${client_id}`;
+console.log(installURL);
+
 module.exports = {
   fetch: (...args) => require("node-fetch")(...args),
-  installURL: `https://slack.com/oauth/v2/authorize?scope=commands&user_scope=chat%3Awrite&redirect_uri=${slackRedirectURI}&client_id=${client_id}`,
+  installURL,
   googleClient: new google.auth.OAuth2(
     googleClientId,
     googleClientSecret,
