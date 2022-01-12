@@ -8,7 +8,9 @@ const {
   slack_redirect_uri: slackRedirectURI = "",
 } = process.env;
 
-const installURL = `https://slack.com/oauth/v2/authorize?scope=commands&user_scope=chat%3Awrite&redirect_uri=${slackRedirectURI}&client_id=${client_id}`;
+const installURL = `https://slack.com/oauth/v2/authorize?scope=commands&user_scope=chat%3Awrite&redirect_uri=${decodeURIComponent(
+  slackRedirectURI
+)}&client_id=${client_id}`;
 console.log(installURL);
 
 module.exports = {
