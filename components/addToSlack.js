@@ -2,7 +2,7 @@ import React from "react";
 
 const addToSlack = () => {
   const URL =
-    "https://slack.com/oauth/v2/authorize?scope=commands&user_scope=chat%3Awrite&redirect_uri=https%3A%2F%2Fslack-google-meet-theta.vercel.app%2Fapi%2Finstall&client_id=4614052801.2943320320548";
+    "https://slack.com/oauth/v2/authorize?scope=commands&user_scope=chat:write,users:read.email,users:read&redirect_uri=https%3A%2F%2Fslack-google-meet-theta.vercel.app%2Fapi%2Finstall&client_id=4614052801.2943320320548";
   return (
     <a
       href={URL}
