@@ -185,7 +185,12 @@ app.post("/api/init-gmeet", async (req, res, next) => {
       throw createError(403, "Slack signature mismatch.");
     }
     const { app_id } = env;
-    const { text = "", api_app_id: apiAPPID, user_id: userId } = req?.body;
+    const {
+      text = "",
+      api_app_id: apiAPPID,
+      user_id: userId,
+      user_name: userName,
+    } = req?.body;
     const {
       userAccessToken,
       googleUser: { isActive },
@@ -201,14 +206,36 @@ app.post("/api/init-gmeet", async (req, res, next) => {
       throw createError(403, "App mismatch.");
     }
     const userIdentities = text?.split("<@");
+    userIdentities.push(`${userId}|${userName}>`);
     let splitEverything = userIdentities[0]?.trim().split(" ");
+    userIdentities.shift();
+    const userDetails = (
+      await Promise.all(
+        userIdentities.map((userIdentity) => {
+          const localUserId = userIdentity.split("|")[0];
+          return bot.users.info({
+            user: localUserId,
+          });
+        })
+      )
+    ).map((user, i) => {
+      const {
+        user: {
+          profile: { email },
+        },
+      } = user;
+      return {
+        userEmail: email,
+        userIdAndName: userIdentities[i],
+      };
+    });
     if (
       splitEverything[0]?.toLowerCase() === "now" &&
       !splitEverything[1]?.toLowerCase().includes("@")
     ) {
       let eventMessage = splitEverything?.slice(1)?.join(" ")?.trim();
       let allEscapedUsers = "";
-      const { link: URL, userEmail: creatorEmail } = await getMeetURL({
+      const { link: URL } = await getMeetURL({
         userId,
         meetName: eventMessage,
       });
@@ -224,21 +251,21 @@ app.post("/api/init-gmeet", async (req, res, next) => {
         });
         return;
       }
-      const allUsers = userIdentities
-        ?.filter((i) => i[0] === "U")
-        .map((i) => i.split("|")[0]);
+      const allUsers = userDetails
+        ?.filter((i) => i?.userIdAndName[0] === "U")
+        .map((i) => ({
+          userId: i?.userIdAndName?.split("|")[0],
+          email: i?.userEmail,
+        }));
       const message = `I have invited${
         allEscapedUsers ? ` ${allEscapedUsers}` : ""
       } to the ${eventMessage}.`;
       if (allUsers.length > 0) {
         allUsers?.forEach(async (s) => {
           await bot.chat.postMessage({
-            channel: s,
+            channel: s?.userId,
             text: message,
-            blocks: formatGMeetBlocks(
-              message,
-              `${URL}?authuser=${creatorEmail}`
-            ),
+            blocks: formatGMeetBlocks(message, `${URL}?authuser=${s?.email}`),
           });
         });
         res.send("");
