@@ -206,7 +206,6 @@ app.post("/api/init-gmeet", async (req, res, next) => {
       splitEverything[0]?.toLowerCase() === "now" &&
       !splitEverything[1]?.toLowerCase().includes("@")
     ) {
-      res.send("");
       let eventMessage = splitEverything?.slice(1)?.join(" ")?.trim();
       let allEscapedUsers = "";
       const { link: URL, userEmail: creatorEmail } = await getMeetURL({
@@ -223,6 +222,7 @@ app.post("/api/init-gmeet", async (req, res, next) => {
         res.json({
           blocks: formatErrorBlocks(),
         });
+        return;
       }
       const allUsers = userIdentities
         ?.filter((i) => i[0] === "U")
