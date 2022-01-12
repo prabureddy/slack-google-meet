@@ -1,6 +1,5 @@
 /** @jsxRuntime classic */
 /** @jsx jsx */
-import Layout from "components/layout";
 import React from "react";
 import SectionHeading from "../components/section-heading";
 import { jsx, Text } from "theme-ui";
