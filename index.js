@@ -2,7 +2,6 @@ const createError = require("http-errors");
 const express = require("express");
 const logger = require("morgan");
 const fs = require("firebase-admin");
-const functions = require("firebase-functions");
 const indexRouter = require("./api");
 const dotenv = require("dotenv");
 dotenv.config();
@@ -32,4 +31,6 @@ app.use(function (err, req, res) {
   res.status(statusCode).json({ ...err, statusCode });
 });
 
-exports.api = functions.region("asia-south1").https.onRequest(app);
+app.listen(3000, () => {
+  console.log("Server is running on port 3000");
+});
