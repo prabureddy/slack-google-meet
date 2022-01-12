@@ -223,7 +223,6 @@ app.post("/api/init-gmeet", async (req, res, next) => {
         res.json({
           blocks: formatErrorBlocks(),
         });
-        return;
       }
       const allUsers = userIdentities
         ?.filter((i) => i[0] === "U")
