@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "build": "next build",
-    "dev": "nodemon index.js",
+    "dev": "nodemon ./api/index.js",
     "dev-ui": "next dev",
     "start": "cross-env NODE_ENV=production node index.js",
     "serve": "next start",

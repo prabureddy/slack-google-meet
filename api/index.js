@@ -1,10 +1,14 @@
 const express = require("express");
+const dotenv = require("dotenv");
 const createError = require("http-errors");
+const logger = require("morgan");
+const fs = require("firebase-admin");
 const { WebClient } = require("@slack/web-api");
 const FormData = require("form-data");
 const { Headers } = require("node-fetch");
 const { firestore: db } = require("firebase-admin");
-const app = express();
+const { google } = require("googleapis");
+dotenv.config();
 const { fetch, installURL, googleClient, env } = require("../common");
 const { legitSlackRequest } = require("../middlewares");
 const {
@@ -14,7 +18,21 @@ const {
   connectAccount,
 } = require("../utils/formatBlocks");
 const { uid } = require("../utils/index");
-const { google } = require("googleapis");
+
+fs.initializeApp({
+  credential: fs.credential.cert({
+    projectId: env["firebase_project_id"],
+    clientEmail: env["firebase_client_email"],
+    privateKey: String(env["firebase_private_key"]),
+  }),
+  databaseURL: env["firebase_database_url"],
+});
+
+const app = express();
+
+app.use(logger("dev"));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 const getMeetURL = async ({ userId, meetName }) => {
   const usersDb = await (
@@ -97,7 +115,7 @@ const getMeetURL = async ({ userId, meetName }) => {
   });
 };
 
-app.get("/install", async (req, res, next) => {
+app.get("/api/install", async (req, res, next) => {
   try {
     const { code = "" } = req.query;
     const { client_id: clientId = "", client_secret: clientSecret = "" } = env;
@@ -160,7 +178,7 @@ app.get("/install", async (req, res, next) => {
   }
 });
 
-app.post("/init-gmeet", async (req, res, next) => {
+app.post("/api/init-gmeet", async (req, res, next) => {
   try {
     const legit = legitSlackRequest(req);
     if (!legit) {
@@ -239,7 +257,7 @@ app.post("/init-gmeet", async (req, res, next) => {
   }
 });
 
-app.post("/interactivity", async (req, res) => {
+app.post("/api/interactivity", async (req, res) => {
   const legit = legitSlackRequest(req);
   if (!legit) {
     throw createError(403, "Slack signature mismatch.");
@@ -279,7 +297,7 @@ app.post("/interactivity", async (req, res) => {
   res.status(200).send();
 });
 
-app.get("/google/redirect", async (req, res, next) => {
+app.get("/api/google/redirect", async (req, res, next) => {
   try {
     const {
       google_client_id: googleClientId = "",
@@ -346,6 +364,25 @@ app.get("/google/redirect", async (req, res, next) => {
   } catch (error) {
     next(error);
   }
+});
+
+// catch 404 and forward to error handler
+app.use(function (req, res, next) {
+  next(createError(404));
+});
+
+// error handler
+app.use(function (err, req, res) {
+  res.locals.message = err.message;
+  res.locals.error = req.app.get("NODE_ENV") === "development" ? err : {};
+
+  // render the error page
+  const statusCode = err.status || 500;
+  res.status(statusCode).json({ ...err, statusCode });
+});
+
+app.listen(3000, () => {
+  console.log("Server is running on port 3000");
 });
 
 module.exports = app;
