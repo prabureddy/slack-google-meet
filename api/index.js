@@ -34,12 +34,6 @@ app.use(logger("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-const errorHandler = (err, next) => {
-  if (err?.code !== "ERR_HTTP_HEADERS_SENT") {
-    next(err);
-  }
-};
-
 const getMeetURL = async ({ userId, meetName }) => {
   const usersDb = await (
     await db().collection("users").doc(userId).get()
@@ -180,7 +174,7 @@ app.get("/api/install", async (req, res, next) => {
     }
     res.redirect(`https://slack.com/app_redirect?app=${app_id}&tab=home`);
   } catch (error) {
-    errorHandler(error, next);
+    next(error);
   }
 });
 
@@ -287,7 +281,9 @@ app.post("/api/init-gmeet", async (req, res, next) => {
       });
     }
   } catch (error) {
-    errorHandler(error, next);
+    if (err?.code !== "ERR_HTTP_HEADERS_SENT") {
+      next(error);
+    }
   }
 });
 
@@ -396,7 +392,7 @@ app.get("/api/google/redirect", async (req, res, next) => {
       res.status(400).send("Bad Request");
     }
   } catch (error) {
-    errorHandler(error, next);
+    next(error);
   }
 });
 
