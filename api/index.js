@@ -281,7 +281,8 @@ app.post("/api/init-gmeet", async (req, res, next) => {
       });
     }
   } catch (error) {
-    if (err?.code !== "ERR_HTTP_HEADERS_SENT") {
+    if (error?.code !== "ERR_HTTP_HEADERS_SENT") {
+      console.log(error);
       next(error);
     }
   }
