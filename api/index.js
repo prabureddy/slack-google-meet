@@ -34,6 +34,12 @@ app.use(logger("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+const errorHandler = (err, next) => {
+  if (err?.code !== "ERR_HTTP_HEADERS_SENT") {
+    next(err);
+  }
+};
+
 const getMeetURL = async ({ userId, meetName }) => {
   const usersDb = await (
     await db().collection("users").doc(userId).get()
@@ -174,7 +180,7 @@ app.get("/api/install", async (req, res, next) => {
     }
     res.redirect(`https://slack.com/app_redirect?app=${app_id}&tab=home`);
   } catch (error) {
-    next(error);
+    errorHandler(error, next);
   }
 });
 
@@ -205,6 +211,7 @@ app.post("/api/init-gmeet", async (req, res, next) => {
     if (app_id !== apiAPPID) {
       throw createError(403, "App mismatch.");
     }
+    res.send("");
     const userIdentities = text?.split("<@");
     userIdentities.push(`${userId}|${userName}>`);
     let splitEverything = userIdentities[0]?.trim().split(" ");
@@ -280,7 +287,7 @@ app.post("/api/init-gmeet", async (req, res, next) => {
       });
     }
   } catch (error) {
-    next(error);
+    errorHandler(error, next);
   }
 });
 
@@ -389,7 +396,7 @@ app.get("/api/google/redirect", async (req, res, next) => {
       res.status(400).send("Bad Request");
     }
   } catch (error) {
-    next(error);
+    errorHandler(error, next);
   }
 });
 
