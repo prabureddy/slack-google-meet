@@ -184,6 +184,12 @@ app.post("/api/init-gmeet", async (req, res, next) => {
     if (!legit) {
       throw createError(403, "Slack signature mismatch.");
     }
+    setTimeout(() => {
+      if (!res.headersSent) {
+        console.log("header sending");
+        res.send("");
+      }
+    }, 2700);
     console.log("starting");
     const { app_id } = env;
     const {
