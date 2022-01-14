@@ -267,9 +267,7 @@ app.post("/api/init-gmeet", async (req, res, next) => {
           userId: i?.userIdAndName?.split("|")[0],
           email: i?.userEmail,
         }));
-      const message = `I have invited${
-        allEscapedUsers ? ` ${allEscapedUsers}` : ""
-      } to the ${eventMessage}.`;
+      const message = `Hey! Could you join this ${eventMessage} now.`;
       const requests = await Promise.all(
         allUsers.map((s) =>
           bot.chat.postMessage({
@@ -292,8 +290,14 @@ app.post("/api/init-gmeet", async (req, res, next) => {
           profile: { email: userEmailId },
         },
       } = user;
+      const adminMessage = `You have invited${
+        allEscapedUsers ? ` ${allEscapedUsers}` : ""
+      } to the join ${eventMessage}. I have sent a message to all the users. Have a great day!`;
       res.json({
-        blocks: formatGMeetBlocks(message, `${URL}?authuser=${userEmailId}`),
+        blocks: formatGMeetBlocks(
+          adminMessage,
+          `${URL}?authuser=${userEmailId}`
+        ),
       });
     } else {
       console.log("starting 8");
