@@ -213,9 +213,7 @@ app.post("/api/init-gmeet", async (req, res, next) => {
       throw createError(403, "App mismatch.");
     }
     console.log("starting 2");
-    // res.send("");
     const userIdentities = text?.split("<@");
-    userIdentities.push(`${userId}|${userName}>`);
     let splitEverything = userIdentities[0]?.trim().split(" ");
     userIdentities.shift();
     const userDetails = (
@@ -284,7 +282,19 @@ app.post("/api/init-gmeet", async (req, res, next) => {
       console.log("starting 6 ", requests);
       if (!requests) {
         res.send("Something went wrong while creating meeting!");
+        return;
       }
+      const user = await bot.users.info({
+        user: userId,
+      });
+      const {
+        user: {
+          profile: { email: userEmailId },
+        },
+      } = user;
+      res.json({
+        blocks: formatGMeetBlocks(message, `${URL}?authuser=${userEmailId}`),
+      });
     } else {
       console.log("starting 8");
       res.json({
@@ -292,10 +302,8 @@ app.post("/api/init-gmeet", async (req, res, next) => {
       });
     }
   } catch (error) {
-    if (error?.code !== "ERR_HTTP_HEADERS_SENT") {
-      console.log(error);
-      next(error);
-    }
+    console.log(error);
+    next(error);
   }
 });
 
