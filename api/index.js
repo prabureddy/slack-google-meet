@@ -272,22 +272,19 @@ app.post("/api/init-gmeet", async (req, res, next) => {
       const message = `I have invited${
         allEscapedUsers ? ` ${allEscapedUsers}` : ""
       } to the ${eventMessage}.`;
-      if (allUsers.length > 0) {
-        allUsers?.forEach(async (s) => {
-          await bot.chat.postMessage({
+      const requests = await Promise.all(
+        allUsers.map((s) =>
+          bot.chat.postMessage({
             channel: s?.userId,
             text: message,
             blocks: formatGMeetBlocks(message, `${URL}?authuser=${s?.email}`),
-          });
-        });
-        console.log("starting 6");
-        res.send("");
-        return;
+          })
+        )
+      );
+      console.log("starting 6 ", requests);
+      if (!requests) {
+        res.send("Something went wrong while creating meeting!");
       }
-      console.log("starting 7");
-      res.json({
-        blocks: formatErrorBlocks(),
-      });
     } else {
       console.log("starting 8");
       res.json({
