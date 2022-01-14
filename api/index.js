@@ -273,7 +273,18 @@ app.post("/api/init-gmeet", async (req, res, next) => {
           bot.chat.postMessage({
             channel: s?.userId,
             text: message,
-            blocks: formatGMeetBlocks(message, `${URL}?authuser=${s?.email}`),
+            blocks: [
+              ...formatGMeetBlocks(message, `${URL}?authuser=${s?.email}`),
+              {
+                type: "context",
+                elements: [
+                  {
+                    type: "mrkdwn",
+                    text: `Meeting scheduled by <@${userId}> with /meet`,
+                  },
+                ],
+              },
+            ],
           })
         )
       );
@@ -294,10 +305,18 @@ app.post("/api/init-gmeet", async (req, res, next) => {
         allEscapedUsers ? ` ${allEscapedUsers}` : ""
       } to the join ${eventMessage}. I have sent a message to all the users. Have a great day!`;
       res.json({
-        blocks: formatGMeetBlocks(
-          adminMessage,
-          `${URL}?authuser=${userEmailId}`
-        ),
+        blocks: [
+          ...formatGMeetBlocks(adminMessage, `${URL}?authuser=${userEmailId}`),
+          {
+            type: "context",
+            elements: [
+              {
+                type: "mrkdwn",
+                text: "Developed by <@U01RTQRA66S>",
+              },
+            ],
+          },
+        ],
       });
     } else {
       console.log("starting 8");
