@@ -184,6 +184,7 @@ app.post("/api/init-gmeet", async (req, res, next) => {
     if (!legit) {
       throw createError(403, "Slack signature mismatch.");
     }
+    console.log("starting");
     const { app_id } = env;
     const {
       text = "",
@@ -205,6 +206,7 @@ app.post("/api/init-gmeet", async (req, res, next) => {
     if (app_id !== apiAPPID) {
       throw createError(403, "App mismatch.");
     }
+    console.log("starting 2");
     res.send("");
     const userIdentities = text?.split("<@");
     userIdentities.push(`${userId}|${userName}>`);
@@ -230,6 +232,7 @@ app.post("/api/init-gmeet", async (req, res, next) => {
         userIdAndName: userIdentities[i],
       };
     });
+    console.log("starting 3");
     if (
       splitEverything[0]?.toLowerCase() === "now" &&
       !splitEverything[1]?.toLowerCase().includes("@")
@@ -240,6 +243,7 @@ app.post("/api/init-gmeet", async (req, res, next) => {
         userId,
         meetName: eventMessage,
       });
+      console.log("starting 4 ", URL);
       if (!URL?.includes("https://")) {
         res.send(URL || "Something went wrong while creating meeting!");
         return;
@@ -252,6 +256,7 @@ app.post("/api/init-gmeet", async (req, res, next) => {
         });
         return;
       }
+      console.log("starting 5");
       const allUsers = userDetails
         ?.filter((i) => i?.userIdAndName[0] === "U")
         .map((i) => ({
@@ -269,13 +274,16 @@ app.post("/api/init-gmeet", async (req, res, next) => {
             blocks: formatGMeetBlocks(message, `${URL}?authuser=${s?.email}`),
           });
         });
+        console.log("starting 6");
         res.send("");
         return;
       }
+      console.log("starting 7");
       res.json({
         blocks: formatErrorBlocks(),
       });
     } else {
+      console.log("starting 8");
       res.json({
         blocks: formatErrorBlocks(),
       });
