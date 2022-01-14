@@ -207,7 +207,7 @@ app.post("/api/init-gmeet", async (req, res, next) => {
       throw createError(403, "App mismatch.");
     }
     console.log("starting 2");
-    res.send("");
+    // res.send("");
     const userIdentities = text?.split("<@");
     userIdentities.push(`${userId}|${userName}>`);
     let splitEverything = userIdentities[0]?.trim().split(" ");
