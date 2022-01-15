@@ -52,6 +52,10 @@ const getMeetURL = async ({ userId, meetName, userDetails }) => {
     const googleCalendar = google.calendar({
       version: "v3",
     });
+    const attendees = userDetails.map((u) => {
+      email: u?.userEmail;
+    });
+    console.table(attendees);
     const event = {
       summary: meetName,
       conferenceData: {
@@ -72,7 +76,7 @@ const getMeetURL = async ({ userId, meetName, userDetails }) => {
       end: {
         dateTime: new Date(new Date().getTime() + 15 * 60000).toISOString(),
       },
-      attendees: userDetails.map((u) => u?.userEmail),
+      attendees,
       reminders: {
         useDefault: true,
       },
