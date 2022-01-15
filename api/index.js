@@ -7,10 +7,10 @@ const { WebClient } = require("@slack/web-api");
 const FormData = require("form-data");
 const { Headers } = require("node-fetch");
 const { firestore: db } = require("firebase-admin");
-const { google } = require("googleapis");
+const argv = require("yargs-parser");
 const cors = require("cors");
 dotenv.config();
-const { fetch, installURL, googleClient, env } = require("../common");
+const { fetch, installURL, env } = require("../common");
 const { legitSlackRequest } = require("../middlewares");
 const {
   formatInstallHomeView,
@@ -19,7 +19,7 @@ const {
   connectAccount,
   installApp,
 } = require("../utils/formatBlocks");
-const { uid } = require("../utils/index");
+const { uid, getMeetURL, parseSlackText } = require("../utils/index");
 
 fs.initializeApp({
   credential: fs.credential.cert({
@@ -36,84 +36,6 @@ app.use(logger("dev"));
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-const getMeetURL = async ({ userId, meetName, userDetails }) => {
-  const usersDb = await (
-    await db().collection("users").doc(userId).get()
-  ).data();
-  const { googleUser } = usersDb;
-  const { access_token = "", refresh_token = "" } = googleUser;
-  if (!googleUser.isActive) {
-    return "Please connect and authorize your google account to create a meeting!";
-  }
-  return new Promise(async (resolve, reject) => {
-    const client = googleClient;
-    client.setCredentials({
-      refresh_token,
-      access_token,
-    });
-    const googleCalendar = google.calendar({
-      version: "v3",
-    });
-    const attendees = userDetails.map((u) => ({
-      email: u?.userEmail,
-    }));
-    console.table(attendees);
-    const event = {
-      summary: meetName,
-      conferenceData: {
-        createRequest: {
-          conferenceSolutionKey: {
-            type: "hangoutsMeet",
-          },
-          requestId: uid(),
-        },
-        entryPoints: [
-          {
-            entryPointType: "video",
-          },
-        ],
-      },
-      start: {
-        dateTime: new Date().toISOString(),
-      },
-      end: {
-        dateTime: new Date(new Date().getTime() + 15 * 60000).toISOString(),
-      },
-      attendees,
-      reminders: {
-        useDefault: true,
-      },
-    };
-    const googleCreateCalendar = await new Promise(
-      (reqCalendar, resCalendar) => {
-        googleCalendar.events.insert(
-          {
-            auth: client,
-            calendarId: "primary",
-            resource: event,
-            conferenceDataVersion: 1,
-          },
-          async (err, res) => {
-            if (err) {
-              resCalendar(err);
-            } else {
-              const { data } = res;
-              reqCalendar(data);
-            }
-          }
-        );
-      }
-    );
-    if (!googleCreateCalendar) {
-      reject(googleCreateCalendar);
-    }
-    resolve({
-      link: `${googleCreateCalendar?.hangoutLink}`,
-      userEmail: `${googleCreateCalendar?.creator?.email}`,
-    });
-  });
-};
 
 app.get("/api/install", async (req, res, next) => {
   try {
@@ -184,23 +106,13 @@ app.post("/api/init-gmeet", async (req, res, next) => {
     if (!legit) {
       throw createError(403, "Slack signature mismatch.");
     }
-    setTimeout(() => {
-      if (!res.headersSent) {
-        console.log("header sending");
-        res.send("");
-        return;
-      }
-    }, 2800);
     console.log("starting");
     const { app_id } = env;
-    const {
-      text = "",
-      api_app_id: apiAPPID,
-      user_id: userId,
-      user_name: userName,
-    } = req?.body;
-    const user = (await db().collection("users").doc(userId).get()).data();
-    if (!user) {
+    const { text = "", api_app_id: apiAPPID, user_id: userId } = req?.body;
+    console.time("userDb");
+    const userDb = (await db().collection("users").doc(userId).get()).data();
+    console.timeEnd("userDb");
+    if (!userDb) {
       installApp().then((r) => {
         res.json(r);
       });
@@ -209,7 +121,7 @@ app.post("/api/init-gmeet", async (req, res, next) => {
     const {
       userAccessToken,
       googleUser: { isActive },
-    } = user;
+    } = userDb;
     if (!isActive) {
       connectAccount({ userId }).then((r) => {
         res.json(r);
@@ -221,69 +133,85 @@ app.post("/api/init-gmeet", async (req, res, next) => {
       throw createError(403, "App mismatch.");
     }
     console.log("starting 2");
-    const userIdentities = text?.split("<@");
-    let splitEverything = userIdentities[0]?.trim().split(" ");
-    userIdentities.shift();
-    const userDetails = (
+    console.time("argv");
+    const rawString = argv(text);
+    console.timeEnd("argv");
+    console.time("parseSlackText");
+    const allDetails = {};
+    Object.keys(rawString).forEach((w, i) => {
+      if (i === 0) {
+        allDetails["type"] = rawString[w]?.[0];
+        allDetails["users"] = rawString[w]
+          ?.slice(1)
+          .map((u) => parseSlackText(u, "USER"));
+        return;
+      }
+      let value = w;
+      switch (w) {
+        case "n":
+          value = "name";
+          break;
+        case "t":
+          value = "startTime";
+          break;
+        case "d":
+          value = "duration";
+          break;
+        default:
+          break;
+      }
+      allDetails[value] = rawString[w];
+    });
+    console.timeEnd("parseSlackText");
+    console.time("addEmail");
+    (
       await Promise.all(
-        userIdentities.map((userIdentity) => {
-          const localUserId = userIdentity.split("|")[0];
+        allDetails.users.map(({ userId }) => {
           return bot.users.info({
-            user: localUserId,
+            user: userId,
           });
         })
       )
-    ).map((user, i) => {
+    ).forEach((user, i) => {
       const {
         user: {
           profile: { email },
         },
       } = user;
-      return {
-        userEmail: email,
-        userIdAndName: userIdentities[i],
-      };
+      allDetails.users[i]["userEmail"] = email;
     });
+    console.timeEnd("addEmail");
     console.log("starting 3");
-    if (
-      splitEverything[0]?.toLowerCase() === "now" &&
-      !splitEverything[1]?.toLowerCase().includes("@")
-    ) {
-      let eventMessage = splitEverything?.slice(1)?.join(" ")?.trim();
-      let allEscapedUsers = "";
+    console.table(allDetails.users);
+    if (allDetails["type"] === "now") {
+      if (!allDetails.name) {
+        return res.send(
+          'Please specify meeting name using --name "UI Signoff".'
+        );
+      }
+      if (allDetails.users.length === 0) {
+        return res.send("Please specify at least one user.");
+      }
+      let eventMessage = allDetails["name"];
+      console.time("getMeetURL");
       const { link: URL } = await getMeetURL({
-        userId,
         meetName: eventMessage,
-        userDetails,
+        details: { ...allDetails, userDb: userDb },
       });
+      console.timeEnd("getMeetURL");
       console.log("starting 4 ", URL);
       if (!URL?.includes("https://")) {
-        res.send(URL || "Something went wrong while creating meeting!");
-        return;
-      }
-      if (eventMessage) {
-        allEscapedUsers = text?.split(eventMessage)[1] || "";
-      } else {
-        res.json({
-          blocks: formatErrorBlocks(),
-        });
-        return;
+        return res.send(URL || "Something went wrong while creating meeting!");
       }
       console.log("starting 5");
-      const allUsers = userDetails
-        ?.filter((i) => i?.userIdAndName[0] === "U")
-        .map((i) => ({
-          userId: i?.userIdAndName?.split("|")[0],
-          email: i?.userEmail,
-        }));
       const message = `Hey! Could you join this ${eventMessage} now.`;
       const requests = await Promise.all(
-        allUsers.map((s) =>
+        allDetails.users.map((s) =>
           bot.chat.postMessage({
             channel: s?.userId,
             text: message,
             blocks: [
-              ...formatGMeetBlocks(message, `${URL}?authuser=${s?.email}`),
+              ...formatGMeetBlocks(message, `${URL}?authuser=${s?.userEmail}`),
               {
                 type: "context",
                 elements: [
@@ -297,23 +225,23 @@ app.post("/api/init-gmeet", async (req, res, next) => {
           })
         )
       );
-      console.log("starting 6 ");
+      console.log("starting 6");
       console.table(requests);
       if (!requests) {
-        res.send("Something went wrong while creating meeting!");
-        return;
+        return res.send("Something went wrong while creating meeting!");
       }
-      const user = await bot.users.info({
+      const adminUser = await bot.users.info({
         user: userId,
       });
       const {
         user: {
           profile: { email: userEmailId },
         },
-      } = user;
-      const adminMessage = `You have invited${
-        allEscapedUsers ? ` ${allEscapedUsers}` : ""
-      } to the join ${eventMessage}. I have sent a message to all the users. Have a great day!`;
+      } = adminUser;
+      const adminMessage = `You have invited ${allDetails.users.map(
+        (u) => `${u?.rawUser}`
+      )} to the join ${eventMessage}. I have sent a message to all the users. Have a great day!`;
+      console.log("starting 7");
       res.json({
         blocks: [
           ...formatGMeetBlocks(adminMessage, `${URL}?authuser=${userEmailId}`),
@@ -328,6 +256,7 @@ app.post("/api/init-gmeet", async (req, res, next) => {
           },
         ],
       });
+      console.log("completed");
     } else {
       console.log("starting 8");
       res.json({

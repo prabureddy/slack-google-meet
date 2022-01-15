@@ -31,7 +31,29 @@ const howToUseItBlocks = [
     type: "section",
     text: {
       type: "mrkdwn",
-      text: "  *```/meet now meeting name @user1 @user2```*",
+      text: '*```/meet now --name "review design" --duration 20 @user1 => Created meeting for 20 minutes```*',
+    },
+  },
+  {
+    type: "section",
+    text: {
+      type: "mrkdwn",
+      text: '*```/meet now --n "review design" ---time 13:00 --d 60 @user1 @user2 => Meeting created at 1PM with duration of 1 hour```*',
+    },
+  },
+  {
+    type: "section",
+    text: {
+      type: "plain_text",
+      text: "Use this flags to customize the meeting.",
+      emoji: true,
+    },
+  },
+  {
+    type: "section",
+    text: {
+      type: "mrkdwn",
+      text: "*```Name: -n, --name Time: -t, --time (Optional) Duration: -d, --duration (Optional, Default = 15)```*",
     },
   },
 ];
