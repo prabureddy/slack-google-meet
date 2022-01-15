@@ -8,6 +8,7 @@ const FormData = require("form-data");
 const { Headers } = require("node-fetch");
 const { firestore: db } = require("firebase-admin");
 const { google } = require("googleapis");
+const cors = require("cors");
 dotenv.config();
 const { fetch, installURL, googleClient, env } = require("../common");
 const { legitSlackRequest } = require("../middlewares");
@@ -16,6 +17,7 @@ const {
   formatGMeetBlocks,
   formatErrorBlocks,
   connectAccount,
+  installApp,
 } = require("../utils/formatBlocks");
 const { uid } = require("../utils/index");
 
@@ -31,6 +33,7 @@ fs.initializeApp({
 const app = express();
 
 app.use(logger("dev"));
+app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -63,6 +66,7 @@ const getMeetURL = async ({ userId, meetName, userDetails }) => {
           conferenceSolutionKey: {
             type: "hangoutsMeet",
           },
+          requestId: uid(),
         },
         entryPoints: [
           {
@@ -88,6 +92,7 @@ const getMeetURL = async ({ userId, meetName, userDetails }) => {
             auth: client,
             calendarId: "primary",
             resource: event,
+            conferenceDataVersion: 1,
           },
           async (err, res) => {
             if (err) {
@@ -100,25 +105,12 @@ const getMeetURL = async ({ userId, meetName, userDetails }) => {
         );
       }
     );
-    const meetData = (
-      await googleCalendar.events.patch({
-        auth: client,
-        calendarId: "primary",
-        eventId: googleCreateCalendar?.id,
-        conferenceDataVersion: 1,
-        resource: {
-          conferenceData: {
-            createRequest: { requestId: uid() },
-          },
-        },
-      })
-    )?.data;
-    if (!meetData) {
-      reject(meetData);
+    if (!googleCreateCalendar) {
+      reject(googleCreateCalendar);
     }
     resolve({
-      link: `${meetData?.hangoutLink}`,
-      userEmail: `${meetData?.creator?.email}`,
+      link: `${googleCreateCalendar?.hangoutLink}`,
+      userEmail: `${googleCreateCalendar?.creator?.email}`,
     });
   });
 };
@@ -196,8 +188,9 @@ app.post("/api/init-gmeet", async (req, res, next) => {
       if (!res.headersSent) {
         console.log("header sending");
         res.send("");
+        return;
       }
-    }, 2700);
+    }, 2800);
     console.log("starting");
     const { app_id } = env;
     const {
@@ -206,10 +199,17 @@ app.post("/api/init-gmeet", async (req, res, next) => {
       user_id: userId,
       user_name: userName,
     } = req?.body;
+    const user = (await db().collection("users").doc(userId).get()).data();
+    if (!user) {
+      installApp().then((r) => {
+        res.json(r);
+      });
+      return;
+    }
     const {
       userAccessToken,
       googleUser: { isActive },
-    } = (await db().collection("users").doc(userId).get()).data();
+    } = user;
     if (!isActive) {
       connectAccount({ userId }).then((r) => {
         res.json(r);
@@ -378,6 +378,10 @@ app.post("/api/interactivity", async (req, res) => {
     }
   });
   res.status(200).send();
+});
+
+app.get("/api/install-url", (_, res) => {
+  res.send({ installURL });
 });
 
 app.get("/api/google/redirect", async (req, res, next) => {

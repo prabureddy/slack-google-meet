@@ -1,6 +1,6 @@
 const { firestore: db } = require("firebase-admin");
 const { google } = require("googleapis");
-const { googleClient, env } = require("../common");
+const { googleClient, env, installURL } = require("../common");
 
 const howToUseItBlocks = [
   {
@@ -145,6 +145,38 @@ module.exports = {
         ],
       },
     };
+  },
+  installApp: async () => {
+    return new Promise((response) => {
+      response({
+        blocks: [
+          {
+            type: "section",
+            text: {
+              type: "plain_text",
+              text: "Install this app to start using it...",
+            },
+          },
+          {
+            type: "actions",
+            elements: [
+              {
+                type: "button",
+                text: {
+                  type: "plain_text",
+                  text: "Install App ✔️",
+                  emoji: true,
+                },
+                style: "primary",
+                action_id: `install_app`,
+                value: `install_app`,
+                url: installURL,
+              },
+            ],
+          },
+        ],
+      });
+    });
   },
   connectAccount: async ({ userId = "" }) => {
     const usersDb = (await db().collection("users").doc(userId).get()).data();

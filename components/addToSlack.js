@@ -1,11 +1,27 @@
-import React from "react";
+import { useState, useEffect } from "react";
 
 const addToSlack = () => {
+  const [installURL, setInstallURL] = useState("");
   const URL =
     "https://slack.com/oauth/v2/authorize?scope=commands&user_scope=chat:write,users:read.email,users:read&redirect_uri=https%3A%2F%2Fslack-google-meet-mis.vercel.app%2Fapi%2Finstall&client_id=4614052801.2943320320548";
+  useEffect(() => {
+    (async () => {
+      const isLocalhost = window.location.host.includes("localhost");
+      const response = await fetch(
+        isLocalhost
+          ? "http://localhost:3001/api/install-url"
+          : "/api/install-url"
+      );
+      const { installURL } = await response.json();
+      setInstallURL(installURL);
+    })();
+  }, []);
+  if (!installURL) {
+    return null;
+  }
   return (
     <a
-      href={URL}
+      href={installURL}
       style={{
         alignItems: "center",
         color: "#fff",

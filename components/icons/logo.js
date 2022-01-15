@@ -4,12 +4,12 @@ const Logo = ({ white, ...props }) => {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      width="201"
-      height="100"
+      width={201}
+      height={100}
       viewBox="0 0 201 100"
       fill="none"
     >
-      <g clip-path="url(#clip0_3_13)">
+      <g clipPath="url(#clip0_3_13)">
         <g filter="url(#filter0_d_3_13)">
           <path
             d="M29.8002 18.2625L29.8627 18.225L30.1502 18.0562C31.9366 17.0455 33.7911 16.16 35.7002 15.4062C39.4377 13.9375 44.5002 12.5 50.0002 12.5C55.5002 12.5 60.5627 13.9375 64.3065 15.4062C66.2136 16.16 68.066 17.0454 69.8502 18.0562C69.9815 18.1312 70.0752 18.1812 70.1315 18.225L70.194 18.2625H70.2002C70.8994 18.6879 71.7375 18.8221 72.5345 18.6362C73.3316 18.4502 74.0238 17.959 74.4626 17.2682C74.9013 16.5773 75.0516 15.7419 74.881 14.9414C74.7104 14.141 74.2325 13.4394 73.5502 12.9875H73.544L73.5315 12.975L73.5002 12.9562L73.3877 12.8875C72.8031 12.5381 72.2092 12.2046 71.6065 11.8875C69.9785 11.0324 68.3052 10.2667 66.594 9.59375C62.4065 7.9375 56.5315 6.25 50.0002 6.25C43.4627 6.25 37.594 7.9375 33.4065 9.59375C31.1998 10.4629 29.057 11.4863 26.994 12.6563C26.8661 12.7321 26.7391 12.8092 26.6127 12.8875L26.5002 12.95L26.469 12.975L26.4565 12.9812C25.7561 13.4247 25.2606 14.1281 25.0789 14.9369C24.8973 15.7456 25.0443 16.5934 25.4877 17.2937C25.9311 17.9941 26.6346 18.4896 27.4433 18.6713C28.2521 18.8529 29.0999 18.7059 29.8002 18.2625V18.2625Z"
@@ -43,17 +43,17 @@ const Logo = ({ white, ...props }) => {
           width="57.9468"
           height="20.4973"
           filterUnits="userSpaceOnUse"
-          color-interpolation-filters="sRGB"
+          colorInterpolationFilters="sRGB"
         >
-          <feFlood flood-opacity="0" result="BackgroundImageFix" />
+          <feFlood floodOpacity={0} result="BackgroundImageFix" />
           <feColorMatrix
             in="SourceAlpha"
             type="matrix"
             values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
             result="hardAlpha"
           />
-          <feOffset dy="4" />
-          <feGaussianBlur stdDeviation="2" />
+          <feOffset dy={4} />
+          <feGaussianBlur stdDeviation={2} />
           <feComposite in2="hardAlpha" operator="out" />
           <feColorMatrix
             type="matrix"
@@ -74,21 +74,21 @@ const Logo = ({ white, ...props }) => {
         <filter
           id="filter1_d_3_13"
           x="8.5"
-          y="25"
-          width="83"
-          height="58"
+          y={25}
+          width={83}
+          height={58}
           filterUnits="userSpaceOnUse"
-          color-interpolation-filters="sRGB"
+          colorInterpolationFilters="sRGB"
         >
-          <feFlood flood-opacity="0" result="BackgroundImageFix" />
+          <feFlood floodOpacity={0} result="BackgroundImageFix" />
           <feColorMatrix
             in="SourceAlpha"
             type="matrix"
             values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
             result="hardAlpha"
           />
-          <feOffset dy="4" />
-          <feGaussianBlur stdDeviation="2" />
+          <feOffset dy={4} />
+          <feGaussianBlur stdDeviation={2} />
           <feComposite in2="hardAlpha" operator="out" />
           <feColorMatrix
             type="matrix"
@@ -113,17 +113,17 @@ const Logo = ({ white, ...props }) => {
           width="57.9514"
           height="20.499"
           filterUnits="userSpaceOnUse"
-          color-interpolation-filters="sRGB"
+          colorInterpolationFilters="sRGB"
         >
-          <feFlood flood-opacity="0" result="BackgroundImageFix" />
+          <feFlood floodOpacity={0} result="BackgroundImageFix" />
           <feColorMatrix
             in="SourceAlpha"
             type="matrix"
             values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
             result="hardAlpha"
           />
-          <feOffset dy="4" />
-          <feGaussianBlur stdDeviation="2" />
+          <feOffset dy={4} />
+          <feGaussianBlur stdDeviation={2} />
           <feComposite in2="hardAlpha" operator="out" />
           <feColorMatrix
             type="matrix"
@@ -148,17 +148,17 @@ const Logo = ({ white, ...props }) => {
           width="82.3499"
           height="47.41"
           filterUnits="userSpaceOnUse"
-          color-interpolation-filters="sRGB"
+          colorInterpolationFilters="sRGB"
         >
-          <feFlood flood-opacity="0" result="BackgroundImageFix" />
+          <feFlood floodOpacity={0} result="BackgroundImageFix" />
           <feColorMatrix
             in="SourceAlpha"
             type="matrix"
             values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
             result="hardAlpha"
           />
-          <feOffset dy="4" />
-          <feGaussianBlur stdDeviation="2" />
+          <feOffset dy={4} />
+          <feGaussianBlur stdDeviation={2} />
           <feComposite in2="hardAlpha" operator="out" />
           <feColorMatrix
             type="matrix"
@@ -177,7 +177,7 @@ const Logo = ({ white, ...props }) => {
           />
         </filter>
         <clipPath id="clip0_3_13">
-          <rect width="100" height="100" fill="white" />
+          <rect width={100} height={100} fill="white" />
         </clipPath>
       </defs>
     </svg>
