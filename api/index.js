@@ -34,7 +34,7 @@ app.use(logger("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-const getMeetURL = async ({ userId, meetName }) => {
+const getMeetURL = async ({ userId, meetName, userDetails }) => {
   const usersDb = await (
     await db().collection("users").doc(userId).get()
   ).data();
@@ -70,7 +70,11 @@ const getMeetURL = async ({ userId, meetName }) => {
         dateTime: new Date().toISOString(),
       },
       end: {
-        dateTime: new Date().toISOString(),
+        dateTime: new Date(new Date().getTime() + 15 * 60000).toISOString(),
+      },
+      attendees: userDetails.map((u) => u?.userEmail),
+      reminders: {
+        useDefault: true,
       },
     };
     const googleCreateCalendar = await new Promise(
@@ -246,6 +250,7 @@ app.post("/api/init-gmeet", async (req, res, next) => {
       const { link: URL } = await getMeetURL({
         userId,
         meetName: eventMessage,
+        userDetails,
       });
       console.log("starting 4 ", URL);
       if (!URL?.includes("https://")) {
