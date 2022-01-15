@@ -53,7 +53,7 @@ const getMeetURL = async ({ userId, meetName, userDetails }) => {
       version: "v3",
     });
     const attendees = userDetails.map((u) => ({
-      email: u?.userEmail;
+      email: u?.userEmail,
     }));
     console.table(attendees);
     const event = {
