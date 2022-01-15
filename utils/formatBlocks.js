@@ -38,7 +38,7 @@ const howToUseItBlocks = [
     type: "section",
     text: {
       type: "mrkdwn",
-      text: '*```/meet now --n "review design" ---time 13:00 --d 60 @user1 @user2 => Meeting created at 1PM with duration of 1 hour```*',
+      text: '*```/meet now -n "review design" --time 13:00 -d 60 @user1 @user2 => Meeting created at 1PM with duration of 1 hour```*',
     },
   },
   {
