@@ -288,7 +288,8 @@ app.post("/api/init-gmeet", async (req, res, next) => {
           })
         )
       );
-      console.log("starting 6 ", requests);
+      console.log("starting 6 ");
+      console.table(requests);
       if (!requests) {
         res.send("Something went wrong while creating meeting!");
         return;
@@ -312,7 +313,7 @@ app.post("/api/init-gmeet", async (req, res, next) => {
             elements: [
               {
                 type: "mrkdwn",
-                text: "Developed by <@U01RTQRA66S>",
+                text: "Developed by <@U01RTQRA66S>.",
               },
             ],
           },
