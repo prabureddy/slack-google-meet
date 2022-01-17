@@ -1,6 +1,5 @@
 const { google } = require("googleapis");
 const { googleClient } = require("../common");
-const { firestore: db } = require("firebase-admin");
 
 const uid = () => {
   const head = Date.now().toString(36);

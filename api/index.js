@@ -9,6 +9,7 @@ const { Headers } = require("node-fetch");
 const { firestore: db } = require("firebase-admin");
 const argv = require("yargs-parser");
 const cors = require("cors");
+const cron = require("node-cron");
 dotenv.config();
 const { fetch, installURL, env } = require("../common");
 const { legitSlackRequest } = require("../middlewares");
@@ -31,6 +32,14 @@ fs.initializeApp({
 });
 
 const app = express();
+
+cron.schedule("*/60 * * * *", () => {
+  (async () => {
+    await fetch(`${env["app_url"]}/api/install-url`).then(() => {
+      console.log("keeping server active");
+    });
+  })();
+});
 
 app.use(logger("dev"));
 app.use(cors());

@@ -27,6 +27,7 @@
     "next": "latest",
     "next-compose-plugins": "^2.2.1",
     "next-optimized-images": "^2.6.2",
+    "node-cron": "^3.0.0",
     "node-fetch": "^2.6.0",
     "nodemon": "^2.0.14",
     "polished": "^4.0.5",
